@@ -3,7 +3,7 @@
 ## 💽 Projeto 1: Aplicação Multithread 
 
 ### 🎲 Tema 
-O tema do nosso projeto 1 é  [Paciência](https://pt.wikipedia.org/wiki/Paci%C3%AAncia_(jogo)), o jogo de cartas.
+O tema do nosso projeto 1 é  [Campo Minado](https://pt.wikipedia.org/wiki/Campo_minado), o jogo de computador que tem como objectivo revelar um campo de minas sem que alguma seja detonada.
 
 ### 📌 Requisitos 
 - [ ] Uso da biblioteca pthread 
@@ -13,15 +13,17 @@ O tema do nosso projeto 1 é  [Paciência](https://pt.wikipedia.org/wiki/Paci%C3
 - [ ] Problema que dispense sincronização durante o processamento
 
 #### 📋 Matriz 
-Matriz com 12 linhas representando os 12 montes, 1 de compra, 7 de organização e 4 de montagem. 
+Matriz com 9 linhas e 9 colunas. 
 
-O tamanho máximo de cada vetor:
-* Compra: 23 cartas
-* Organização: 19 cartas, sendo este o monte com maior número de cartas fechadas e a sequência completa de K (Rei) até A (Ás)
-* Montagem: 13 cartas
+#### 🃏 Campo
 
-#### 🃏 As cartas 
-Um baralho possui 52 cartas, cada carta possui um valor e um naipe. O valor pode ser um número de 2 a 10, ou A (Ás), K (Rei), Q (Rainha) ou J (Valete). E o naipe pode variar entre 4 símbolos, paus (♣), ouros (♦), copas (♥) e espadas (♠). No jogo, as cartas também vão ser consideradas abertas ou fechadas. 
+Cada espaço da matriz pode ter:
+
+* Espaço fechado
+* Um espaço vazio
+* Um número indicando quantas bombas há em sua volta
+* Um marcador que sinaliza onde tem uma bomba
+* Uma bomba
 
 ## 💻 Autores 
 
