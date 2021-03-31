@@ -112,7 +112,7 @@ void printBoard()
     {
       if (i == MAX_WIDTH)
         printf(" %c ", j + 65);
-      else if (AnswersBoard[i][j] == 0)
+      else if (AnswersBoard[i][j] == 11)
         printf("[ ]");
       else if (AnswersBoard[i][j] == 10)
         printf("[B]");
