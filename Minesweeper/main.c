@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <ctype.h>
 /* Minesweeper board meanings
   0: Blank space = no bombs around
   1 ~ 8: Number of bombs around the space
@@ -14,14 +15,72 @@ int AnswersBoard[MAX_WIDTH][MAX_HEIGHT]; // Board with answers
 int UserBoard[MAX_WIDTH][MAX_HEIGHT];    // Board player can see
 
 void setAnswersBoard();
+void setUserBoard();
 void printBoard();
+int isBoardCompleted();
 
 int main()
 {
+  char command;
+  char cell[3];
+  int row, column;
   printf(" Welcome to Minesweeer!\n");
-  printf(" Choose one field to continue:\n");
   setAnswersBoard();
-  printBoard();
+  setUserBoard();
+  do
+  {
+    printBoard();
+    printf(" Use the command 'o' to open a cell, 'f' to flag a cell or 'q' to quit\n");
+    printf("Command--> ");
+    scanf(" %c", &command);
+
+    if (command == 'o')
+    {
+      printf(" Choose one cell to continue (ie. a1):\n");
+      printf("Cell--> ");
+      scanf(" %s", &cell);
+      cell[0] = toupper(cell[0]);
+      row = (int)cell[1] - 49;
+      column = (int)cell[0] - 65;
+      if (row < MAX_HEIGHT && row >= 0 && column < MAX_WIDTH && column >= 0)
+      {
+        UserBoard[row][column] = AnswersBoard[row][column];
+      }
+      else
+      {
+        printf("Invalid command\n");
+      }
+    }
+    else if (command == 'f')
+    {
+      printf(" Choose one cell to continue (ie. a1):\n");
+      printf("Cell--> ");
+      scanf(" %s", &cell);
+      cell[0] = toupper(cell[0]);
+      row = (int)cell[1] - 49;
+      column = (int)cell[0] - 65;
+      if (row < MAX_HEIGHT && row >= 0 && column < MAX_WIDTH && column >= 0)
+      {
+        UserBoard[row][column] = 9;
+      }
+      else
+      {
+        printf("Invalid command\n");
+      }
+    }
+    else if (command == 'q')
+    {
+      break;
+    }
+    else
+    {
+      printf("Invalid command\n");
+    }
+
+    printBoard();
+
+  } while (isBoardCompleted());
+
   return 0;
 }
 
@@ -40,6 +99,7 @@ void setBombs()
   AnswersBoard[8][2] = 10;
 };
 
+// set a closed board
 void setBlankSpaces()
 {
   for (int i = 0; i < MAX_WIDTH; i++)
@@ -100,6 +160,17 @@ void setAnswersBoard()
   AnswersBoard[8][8] = 1;
 };
 
+void setUserBoard()
+{
+  for (int i = 0; i < MAX_HEIGHT; i++)
+  {
+    for (int j = 0; j < MAX_WIDTH; j++)
+    {
+      UserBoard[i][j] = 11;
+    }
+  }
+}
+
 void printBoard()
 {
   for (int i = 0; i <= MAX_WIDTH; i++)
@@ -112,15 +183,21 @@ void printBoard()
     {
       if (i == MAX_WIDTH)
         printf(" %c ", j + 65);
-      else if (AnswersBoard[i][j] == 11)
+      else if (UserBoard[i][j] == 11)
         printf("[ ]");
-      else if (AnswersBoard[i][j] == 10)
+      else if (UserBoard[i][j] == 10)
         printf("[B]");
-      else if (AnswersBoard[i][j] == 9)
+      else if (UserBoard[i][j] == 9)
         printf("[F]");
       else
-        printf("[%d]", AnswersBoard[i][j]);
+        printf("[%d]", UserBoard[i][j]);
     }
     printf("\n");
   }
 };
+
+int isBoardCompleted()
+{
+  // use Pthread
+  return 0;
+}
