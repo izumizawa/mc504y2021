@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 /* Minesweeper board meanings
   0: Blank space = no bombs around
@@ -12,10 +13,13 @@
 #define MAX_HEIGHT 9
 #define MAX_WIDTH 9
 
-int AnswersBoard[MAX_WIDTH][MAX_HEIGHT]; // Board with answers
-int UserBoard[MAX_WIDTH][MAX_HEIGHT];    // Board player can see
+typedef struct Cell {
+  int value;
+  int is_open;
+} Cell;
 
 typedef struct Quadrant {
+  Cell** board;
   int start_row;
   int start_column;
   int end_row;
@@ -23,6 +27,8 @@ typedef struct Quadrant {
   int return_thread;
 } Quadrant;
 
+Cell*** createBoard();
+void initBoard();
 void setAnswersBoard();
 void setUserBoard();
 void printBoard();
@@ -34,12 +40,12 @@ int main()
   char command;
   char cell[3];
   int row, column;
+  Cell ***board = createBoard();
   printf(" Welcome to Minesweeer!\n");
-  setAnswersBoard();
-  setUserBoard();
+  initBoard(board);
   do
   {
-    printBoard();
+    printBoard(board);
     printf(" Use the command 'o' to open a cell, 'f' to flag a cell or 'q' to quit\n");
     printf("Command--> ");
     scanf(" %c", &command);
@@ -54,13 +60,12 @@ int main()
       column = (int)cell[0] - 65;
       if (row < MAX_HEIGHT && row >= 0 && column < MAX_WIDTH && column >= 0)
       {
-        UserBoard[row][column] = AnswersBoard[row][column];
-        if (UserBoard[row][column] == 10) {
+        board[row][column]->is_open = 1;
+        if (board[row][column]->value == 10) {
           printf("\n GAME OVER :(\n\n");
           break;
-          printf("\n GAME OVER :(\n\n");
         } 
-        else if (UserBoard[row][column] == 0) 
+        else if (board[row][column]->value == 0) 
         {
           openBoard(column, row);
         }
@@ -80,7 +85,8 @@ int main()
       column = (int)cell[0] - 65;
       if (row < MAX_HEIGHT && row >= 0 && column < MAX_WIDTH && column >= 0)
       {
-        UserBoard[row][column] = 9;
+        board[row][column]->is_open = 1;
+        board[row][column]->value = 9;
       }
       else
       {
@@ -96,100 +102,105 @@ int main()
       printf("Invalid command\n");
     }
 
-  } while (isBoardCompleted());
-
-  printBoard();
+  } while (isBoardCompleted(board));
+  printBoard(board);
+  printf("\n");
   return 0;
 }
 
-void setBombs()
+Cell*** createBoard()
 {
-  // Set bombs
-  AnswersBoard[0][7] = 10;
-  AnswersBoard[1][0] = 10;
-  AnswersBoard[1][6] = 10;
-  AnswersBoard[2][8] = 10;
-  AnswersBoard[3][7] = 10;
-  AnswersBoard[4][1] = 10;
-  AnswersBoard[4][4] = 10;
-  AnswersBoard[5][3] = 10;
-  AnswersBoard[7][8] = 10;
-  AnswersBoard[8][2] = 10;
-};
-
-// set a closed board
-void setBlankSpaces()
-{
-  for (int i = 0; i < MAX_WIDTH; i++)
-  {
-    for (int j = 0; j < MAX_HEIGHT; j++)
+  Cell ***cell = malloc(MAX_HEIGHT * sizeof(Cell**));
+  if (cell != NULL) {
+    for(int i = 0; i < MAX_HEIGHT; i++) 
     {
-      AnswersBoard[i][j] = 0;
+      cell[i] = malloc(MAX_WIDTH * sizeof(Cell*));
+      if(cell[i] != NULL)
+      for(int j = 0; j < MAX_WIDTH; j++) 
+      {
+        cell[i][j] = malloc(sizeof(Cell));
+      }
     }
   }
-}
+  return cell;
+};
+
+void setBombs(Cell ***cell)
+{
+  cell[0][7]->value = 10;
+  cell[1][0]->value = 10;
+  cell[1][6]->value = 10;
+  cell[2][8]->value = 10;
+  cell[3][7]->value = 10;
+  cell[4][1]->value = 10;
+  cell[4][4]->value = 10;
+  cell[5][3]->value = 10;
+  cell[7][8]->value = 10;
+  cell[8][2]->value = 10;
+};
 
 // Create fixed board
-void setAnswersBoard()
+void setValuesBoard(Cell ***cell)
 {
-  setBlankSpaces();
-  setBombs();
-  AnswersBoard[0][0] = 1;
-  AnswersBoard[0][1] = 1;
-  AnswersBoard[0][5] = 1;
-  AnswersBoard[0][6] = 2;
-  AnswersBoard[0][8] = 1;
-  AnswersBoard[1][1] = 1;
-  AnswersBoard[1][5] = 1;
-  AnswersBoard[1][7] = 3;
-  AnswersBoard[1][8] = 2;
-  AnswersBoard[2][0] = 1;
-  AnswersBoard[2][1] = 1;
-  AnswersBoard[2][5] = 1;
-  AnswersBoard[2][6] = 2;
-  AnswersBoard[2][7] = 3;
+  cell[0][0]->value = 1;
+  cell[0][1]->value = 1;
+  cell[0][5]->value = 1;
+  cell[0][6]->value = 2;
+  cell[0][8]->value = 1;
+  cell[1][1]->value = 1;
+  cell[1][5]->value = 1;
+  cell[1][7]->value = 3;
+  cell[1][8]->value = 2;
+  cell[2][0]->value = 1;
+  cell[2][1]->value = 1;
+  cell[2][5]->value = 1;
+  cell[2][6]->value = 2;
+  cell[2][7]->value = 3;
   for (int i = 0; i < 7; i++)
-    AnswersBoard[3][i] = 1;
-  AnswersBoard[3][8] = 2;
-  AnswersBoard[4][0] = 1;
-  AnswersBoard[4][2] = 2;
-  AnswersBoard[4][3] = 2;
-  AnswersBoard[4][5] = 1;
-  AnswersBoard[4][6] = 1;
-  AnswersBoard[4][7] = 1;
-  AnswersBoard[4][8] = 1;
-  AnswersBoard[5][0] = 1;
-  AnswersBoard[5][1] = 1;
-  AnswersBoard[5][2] = 2;
-  AnswersBoard[5][4] = 2;
-  AnswersBoard[5][5] = 1;
-  AnswersBoard[6][2] = 1;
-  AnswersBoard[6][3] = 1;
-  AnswersBoard[6][4] = 1;
-  AnswersBoard[6][7] = 1;
-  AnswersBoard[6][8] = 1;
-  AnswersBoard[7][1] = 1;
-  AnswersBoard[7][2] = 1;
-  AnswersBoard[7][3] = 1;
-  AnswersBoard[7][7] = 1;
-  AnswersBoard[8][1] = 1;
-  AnswersBoard[8][3] = 1;
-  AnswersBoard[8][7] = 1;
-  AnswersBoard[8][8] = 1;
+    cell[3][i]->value = 1;
+  cell[3][8]->value = 2;
+  cell[4][0]->value = 1;
+  cell[4][2]->value = 2;
+  cell[4][3]->value = 2;
+  cell[4][5]->value = 1;
+  cell[4][6]->value = 1;
+  cell[4][7]->value = 1;
+  cell[4][8]->value = 1;
+  cell[5][0]->value = 1;
+  cell[5][1]->value = 1;
+  cell[5][2]->value = 2;
+  cell[5][4]->value = 2;
+  cell[5][5]->value = 1;
+  cell[6][2]->value = 1;
+  cell[6][3]->value = 1;
+  cell[6][4]->value = 1;
+  cell[6][7]->value = 1;
+  cell[6][8]->value = 1;
+  cell[7][1]->value = 1;
+  cell[7][2]->value = 1;
+  cell[7][3]->value = 1;
+  cell[7][7]->value = 1;
+  cell[8][1]->value = 1;
+  cell[8][3]->value = 1;
+  cell[8][7]->value = 1;
+  cell[8][8]->value = 1;
 };
 
-void setUserBoard()
+void initBoard(Cell ***cell) 
 {
-  for (int i = 0; i < MAX_HEIGHT; i++)
+  for (int i = 0; i < MAX_HEIGHT; i++) 
   {
-    for (int j = 0; j < MAX_WIDTH; j++)
+    for (int j = 0; j < MAX_WIDTH; j++) 
     {
-      UserBoard[i][j] = 11;
-    }
+      cell[i][j]->value = 0;
+      cell[i][j]->is_open = 0;
+    }  
   }
-}
+  setBombs(cell);
+  setValuesBoard(cell);
+};
 
-void printBoard()
+void printBoard(Cell ***cell)
 {
   for (int i = 0; i <= MAX_WIDTH; i++)
   {
@@ -201,14 +212,15 @@ void printBoard()
     {
       if (i == MAX_WIDTH)
         printf(" %c ", j + 65);
-      else if (UserBoard[i][j] == 11)
+      else if(cell[i][j]->is_open) {
+        if (cell[i][j]->value == 10)
+          printf("[B]");
+        else if (cell[i][j]->value == 9)
+          printf("[F]");
+        else
+          printf("[%d]", cell[i][j]->value);
+      } else 
         printf("[ ]");
-      else if (UserBoard[i][j] == 10)
-        printf("[B]");
-      else if (UserBoard[i][j] == 9)
-        printf("[F]");
-      else
-        printf("[%d]", UserBoard[i][j]);
     }
     printf("\n");
   }
@@ -225,23 +237,23 @@ void* f_thread(void *v) {
   for (int i = id->start_row; i <= id->end_row; i++) {
     for (int j = id->start_column; j <= id->end_column; j++)
     {
-      if(UserBoard[i][j] == 11 || UserBoard[i][j] == 9) 
+      if(id->board[i][j].value == 11 || id->board[i][j].value == 9) 
           id->return_thread++; 
     }
   }
   return NULL; 
 } 
 
-int isBoardCompleted()
+int isBoardCompleted(Cell ***cell)
 {
   int flags_and_spaces;
   int middle_width = (int)MAX_WIDTH/2;
   int middle_height = (int)MAX_HEIGHT/2;
   pthread_t thr1, thr2, thr3, thr4;
-  Quadrant first_quadrant = {0, 0, middle_height, middle_width, 0};
-  Quadrant second_quadrant = {0, middle_width + 1, middle_height, MAX_WIDTH - 1, 0};
-  Quadrant third_quadrant = {middle_height + 1, 0, MAX_HEIGHT - 1, middle_width, 0};
-  Quadrant fourth_quadrant = {middle_height + 1, middle_width + 1, MAX_HEIGHT - 1, MAX_WIDTH - 1, 0};
+  Quadrant first_quadrant = {*cell, 0, 0, middle_height, middle_width, 0};
+  Quadrant second_quadrant = {*cell, 0, middle_width + 1, middle_height, MAX_WIDTH - 1, 0};
+  Quadrant third_quadrant = {*cell, middle_height + 1, 0, MAX_HEIGHT - 1, middle_width, 0};
+  Quadrant fourth_quadrant = {*cell, middle_height + 1, middle_width + 1, MAX_HEIGHT - 1, MAX_WIDTH - 1, 0};
 
   pthread_create(&thr1, NULL, f_thread, (void*)&first_quadrant);
   pthread_create(&thr2, NULL, f_thread, (void*)&second_quadrant);
