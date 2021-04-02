@@ -10,6 +10,7 @@
 
 #define MAX_HEIGHT 9
 #define MAX_WIDTH 9
+#define BOMBS 10
 
 typedef struct Cell {
   int value;
@@ -136,63 +137,54 @@ Cell*** createBoard()
 
 void setBombs(Cell ***cell)
 {
-  cell[0][7]->value = 10;
-  cell[1][0]->value = 10;
-  cell[1][6]->value = 10;
-  cell[2][8]->value = 10;
-  cell[3][7]->value = 10;
-  cell[4][1]->value = 10;
-  cell[4][4]->value = 10;
-  cell[5][3]->value = 10;
-  cell[7][8]->value = 10;
-  cell[8][2]->value = 10;
+  int bombs = BOMBS;
+  while (bombs != 0) 
+  {
+    int row = rand()%9;
+    int column =  rand()%9;
+    if (cell[row][column]->value != 10) {
+      cell[row][column]->value = 10;
+      bombs--;
+    }
+  }
 };
 
 // Create fixed board
 void setValuesBoard(Cell ***cell)
 {
-  cell[0][0]->value = 1;
-  cell[0][1]->value = 1;
-  cell[0][5]->value = 1;
-  cell[0][6]->value = 2;
-  cell[0][8]->value = 1;
-  cell[1][1]->value = 1;
-  cell[1][5]->value = 1;
-  cell[1][7]->value = 3;
-  cell[1][8]->value = 2;
-  cell[2][0]->value = 1;
-  cell[2][1]->value = 1;
-  cell[2][5]->value = 1;
-  cell[2][6]->value = 2;
-  cell[2][7]->value = 3;
-  for (int i = 0; i < 7; i++)
-    cell[3][i]->value = 1;
-  cell[3][8]->value = 2;
-  cell[4][0]->value = 1;
-  cell[4][2]->value = 2;
-  cell[4][3]->value = 2;
-  cell[4][5]->value = 1;
-  cell[4][6]->value = 1;
-  cell[4][7]->value = 1;
-  cell[4][8]->value = 1;
-  cell[5][0]->value = 1;
-  cell[5][1]->value = 1;
-  cell[5][2]->value = 2;
-  cell[5][4]->value = 2;
-  cell[5][5]->value = 1;
-  cell[6][2]->value = 1;
-  cell[6][3]->value = 1;
-  cell[6][4]->value = 1;
-  cell[6][7]->value = 1;
-  cell[6][8]->value = 1;
-  cell[7][1]->value = 1;
-  cell[7][2]->value = 1;
-  cell[7][3]->value = 1;
-  cell[7][7]->value = 1;
-  cell[8][1]->value = 1;
-  cell[8][3]->value = 1;
-  cell[8][7]->value = 1;
-  cell[8][8]->value = 1;
+  for (int i = 0; i < MAX_HEIGHT; i++)
+  {
+    for (int j = 0; j < MAX_WIDTH; j++)
+    {
+      if(cell[i][j]->value == 10) 
+      {
+        if (i - 1 < MAX_HEIGHT && i - 1 >= 0 && j - 1 < MAX_WIDTH && j - 1 >= 0)
+          if (cell[i-1][j-1]->value != 10)
+            cell[i-1][j-1]->value++;
+        if (i < MAX_HEIGHT && i >= 0 && j - 1 < MAX_WIDTH && j - 1 >= 0)
+          if (cell[i][j-1]->value != 10)
+            cell[i][j-1]->value++;
+        if (i + 1 < MAX_HEIGHT && i + 1 >= 0 && j - 1 < MAX_WIDTH && j - 1 >= 0)
+          if (cell[i+1][j-1]->value != 10)
+            cell[i+1][j-1]->value++;
+        if (i - 1 < MAX_HEIGHT && i - 1 >= 0 && j < MAX_WIDTH && j >= 0)
+          if (cell[i-1][j]->value != 10)
+            cell[i-1][j]->value++;
+        if (i + 1 < MAX_HEIGHT && i + 1 >= 0 && j < MAX_WIDTH && j >= 0)
+          if (cell[i+1][j]->value != 10)
+            cell[i+1][j]->value++;
+        if (i - 1 < MAX_HEIGHT && i - 1 >= 0 && j + 1 < MAX_WIDTH && j + 1 >= 0)
+          if (cell[i-1][j+1]->value != 10)
+            cell[i-1][j+1]->value++;
+        if (i < MAX_HEIGHT && i >= 0 && j + 1 < MAX_WIDTH && j + 1 >= 0)
+          if (cell[i][j+1]->value != 10)
+            cell[i][j+1]->value++;
+        if (i + 1 < MAX_HEIGHT && i + 1 >= 0 && j + 1 < MAX_WIDTH && j + 1 >= 0)
+          if (cell[i+1][j+1]->value != 10)
+            cell[i+1][j+1]->value++;
+      }
+    }
+  }
 };
 
 void initBoard(Cell ***cell) 
