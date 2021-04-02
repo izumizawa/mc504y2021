@@ -261,8 +261,6 @@ int isBoardCompleted(Cell ***cell)
   Quadrant third_quadrant = {cell, middle_height + 1, 0, MAX_HEIGHT - 1, middle_width, 0};
   Quadrant fourth_quadrant = {cell, middle_height + 1, middle_width + 1, MAX_HEIGHT - 1, MAX_WIDTH - 1, 0};
 
-  printf("i: 0 j: 7 open: %d flag: %d \n", cell[0][7]->is_open, cell[0][7]->is_flagged);
-
   pthread_create(&thr1, NULL, f_thread, (void*)&first_quadrant);
   pthread_create(&thr2, NULL, f_thread, (void*)&second_quadrant);
   pthread_create(&thr3, NULL, f_thread, (void*)&third_quadrant);
