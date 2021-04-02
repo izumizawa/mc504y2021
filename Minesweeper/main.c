@@ -16,10 +16,11 @@
 typedef struct Cell {
   int value;
   int is_open;
+  int is_flagged;
 } Cell;
 
 typedef struct Quadrant {
-  Cell** board;
+  Cell*** board;
   int start_row;
   int start_column;
   int end_row;
@@ -32,7 +33,7 @@ void initBoard();
 void setAnswersBoard();
 void setUserBoard();
 void printBoard();
-void openBoard(int column, int row);
+void openBoard(Cell ***board, int column, int row);
 int isBoardCompleted();
 
 int main()
@@ -67,7 +68,7 @@ int main()
         } 
         else if (board[row][column]->value == 0) 
         {
-          openBoard(column, row);
+          openBoard(board, column, row);
         }
       }
       else
@@ -86,7 +87,7 @@ int main()
       if (row < MAX_HEIGHT && row >= 0 && column < MAX_WIDTH && column >= 0)
       {
         board[row][column]->is_open = 1;
-        board[row][column]->value = 9;
+        board[row][column]->is_flagged = 1;
       }
       else
       {
@@ -194,6 +195,7 @@ void initBoard(Cell ***cell)
     {
       cell[i][j]->value = 0;
       cell[i][j]->is_open = 0;
+      cell[i][j]->is_flagged = 0;
     }  
   }
   setBombs(cell);
@@ -213,22 +215,25 @@ void printBoard(Cell ***cell)
       if (i == MAX_WIDTH)
         printf(" %c ", j + 65);
       else if(cell[i][j]->is_open) {
-        if (cell[i][j]->value == 10)
-          printf("[B]");
-        else if (cell[i][j]->value == 9)
+        if (cell[i][j]->is_flagged)
           printf("[F]");
+        else if (cell[i][j]->value == 10)
+          printf("[B]");
         else
           printf("[%d]", cell[i][j]->value);
-      } else 
+      } else if(cell[i][j]->is_open == 0)
         printf("[ ]");
     }
     printf("\n");
   }
 };
 
-void openBoard(int column, int row) {
-  pthread_t thr1;
-  
+void* p_thread_open(void *v) {
+
+};
+
+void openBoard(Cell ***board, int column, int row) {
+  pthread_t thr1, thr2, thr3, thr4, thr5, thr6, thr7, thr8;
 
 };
 
@@ -237,8 +242,9 @@ void* f_thread(void *v) {
   for (int i = id->start_row; i <= id->end_row; i++) {
     for (int j = id->start_column; j <= id->end_column; j++)
     {
-      if(id->board[i][j].value == 11 || id->board[i][j].value == 9) 
-          id->return_thread++; 
+      if(id->board[i][j]->is_open == 0 || id->board[i][j]->is_flagged) {
+        id->return_thread++; 
+      } 
     }
   }
   return NULL; 
@@ -250,10 +256,12 @@ int isBoardCompleted(Cell ***cell)
   int middle_width = (int)MAX_WIDTH/2;
   int middle_height = (int)MAX_HEIGHT/2;
   pthread_t thr1, thr2, thr3, thr4;
-  Quadrant first_quadrant = {*cell, 0, 0, middle_height, middle_width, 0};
-  Quadrant second_quadrant = {*cell, 0, middle_width + 1, middle_height, MAX_WIDTH - 1, 0};
-  Quadrant third_quadrant = {*cell, middle_height + 1, 0, MAX_HEIGHT - 1, middle_width, 0};
-  Quadrant fourth_quadrant = {*cell, middle_height + 1, middle_width + 1, MAX_HEIGHT - 1, MAX_WIDTH - 1, 0};
+  Quadrant first_quadrant = {cell, 0, 0, middle_height, middle_width, 0};
+  Quadrant second_quadrant = {cell, 0, middle_width + 1, middle_height, MAX_WIDTH - 1, 0};
+  Quadrant third_quadrant = {cell, middle_height + 1, 0, MAX_HEIGHT - 1, middle_width, 0};
+  Quadrant fourth_quadrant = {cell, middle_height + 1, middle_width + 1, MAX_HEIGHT - 1, MAX_WIDTH - 1, 0};
+
+  printf("i: 0 j: 7 open: %d flag: %d \n", cell[0][7]->is_open, cell[0][7]->is_flagged);
 
   pthread_create(&thr1, NULL, f_thread, (void*)&first_quadrant);
   pthread_create(&thr2, NULL, f_thread, (void*)&second_quadrant);
