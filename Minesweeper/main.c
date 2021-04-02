@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <stdio.h>
 #include <ctype.h>
 /* Minesweeper board meanings
@@ -14,9 +15,18 @@
 int AnswersBoard[MAX_WIDTH][MAX_HEIGHT]; // Board with answers
 int UserBoard[MAX_WIDTH][MAX_HEIGHT];    // Board player can see
 
+typedef struct Quadrant {
+  int start_row;
+  int start_column;
+  int end_row;
+  int end_column;
+  int return_thread;
+} Quadrant;
+
 void setAnswersBoard();
 void setUserBoard();
 void printBoard();
+void openBoard(int column, int row);
 int isBoardCompleted();
 
 int main()
@@ -38,13 +48,22 @@ int main()
     {
       printf(" Choose one cell to continue (ie. a1):\n");
       printf("Cell--> ");
-      scanf(" %s", &cell);
+      scanf(" %s", cell);
       cell[0] = toupper(cell[0]);
       row = (int)cell[1] - 49;
       column = (int)cell[0] - 65;
       if (row < MAX_HEIGHT && row >= 0 && column < MAX_WIDTH && column >= 0)
       {
         UserBoard[row][column] = AnswersBoard[row][column];
+        if (UserBoard[row][column] == 10) {
+          printf("\n GAME OVER :(\n\n");
+          break;
+          printf("\n GAME OVER :(\n\n");
+        } 
+        else if (UserBoard[row][column] == 0) 
+        {
+          openBoard(column, row);
+        }
       }
       else
       {
@@ -55,7 +74,7 @@ int main()
     {
       printf(" Choose one cell to continue (ie. a1):\n");
       printf("Cell--> ");
-      scanf(" %s", &cell);
+      scanf(" %s", cell);
       cell[0] = toupper(cell[0]);
       row = (int)cell[1] - 49;
       column = (int)cell[0] - 65;
@@ -77,10 +96,9 @@ int main()
       printf("Invalid command\n");
     }
 
-    printBoard();
-
   } while (isBoardCompleted());
 
+  printBoard();
   return 0;
 }
 
@@ -196,8 +214,50 @@ void printBoard()
   }
 };
 
+void openBoard(int column, int row) {
+  pthread_t thr1;
+  
+
+};
+
+void* f_thread(void *v) {
+  Quadrant *id = (Quadrant*)v;
+  for (int i = id->start_row; i <= id->end_row; i++) {
+    for (int j = id->start_column; j <= id->end_column; j++)
+    {
+      if(UserBoard[i][j] == 11 || UserBoard[i][j] == 9) 
+          id->return_thread++; 
+    }
+  }
+  return NULL; 
+} 
+
 int isBoardCompleted()
 {
-  // use Pthread
-  return 0;
+  int flags_and_spaces;
+  int middle_width = (int)MAX_WIDTH/2;
+  int middle_height = (int)MAX_HEIGHT/2;
+  pthread_t thr1, thr2, thr3, thr4;
+  Quadrant first_quadrant = {0, 0, middle_height, middle_width, 0};
+  Quadrant second_quadrant = {0, middle_width + 1, middle_height, MAX_WIDTH - 1, 0};
+  Quadrant third_quadrant = {middle_height + 1, 0, MAX_HEIGHT - 1, middle_width, 0};
+  Quadrant fourth_quadrant = {middle_height + 1, middle_width + 1, MAX_HEIGHT - 1, MAX_WIDTH - 1, 0};
+
+  pthread_create(&thr1, NULL, f_thread, (void*)&first_quadrant);
+  pthread_create(&thr2, NULL, f_thread, (void*)&second_quadrant);
+  pthread_create(&thr3, NULL, f_thread, (void*)&third_quadrant);
+  pthread_create(&thr4, NULL, f_thread, (void*)&fourth_quadrant);
+
+  pthread_join(thr1, NULL);
+  pthread_join(thr2, NULL);
+  pthread_join(thr3, NULL);
+  pthread_join(thr4, NULL);
+
+  flags_and_spaces = first_quadrant.return_thread + second_quadrant.return_thread + third_quadrant.return_thread + fourth_quadrant.return_thread;
+  if (flags_and_spaces == 10) {
+    printf("\n YOU WIN :)\n\n");
+    return 0;
+  }
+  return 1;
 }
+
