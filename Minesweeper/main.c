@@ -5,9 +5,7 @@
 /* Minesweeper board meanings
   0: Blank space = no bombs around
   1 ~ 8: Number of bombs around the space
-  9: Flag where player thinks there is a bomb
   10: Bomb (B)
-  11: Closed space (' ')
 */
 
 #define MAX_HEIGHT 9
@@ -27,6 +25,12 @@ typedef struct Quadrant {
   int end_column;
   int return_thread;
 } Quadrant;
+
+typedef struct CurrentCell {
+  Cell*** board;
+  int row;
+  int column;
+} CurrentCell;
 
 Cell*** createBoard();
 void initBoard();
@@ -61,14 +65,18 @@ int main()
       column = (int)cell[0] - 65;
       if (row < MAX_HEIGHT && row >= 0 && column < MAX_WIDTH && column >= 0)
       {
-        board[row][column]->is_open = 1;
         if (board[row][column]->value == 10) {
+          board[row][column]->is_open = 1;
           printf("\n GAME OVER :(\n\n");
           break;
         } 
         else if (board[row][column]->value == 0) 
         {
           openBoard(board, column, row);
+        }
+        else
+        {
+          board[row][column]->is_open = 1;
         }
       }
       else
@@ -229,12 +237,39 @@ void printBoard(Cell ***cell)
 };
 
 void* p_thread_open(void *v) {
+  CurrentCell *cell = (CurrentCell*)v;
+  if(cell->board[cell->row][cell->column]->is_open == 0) 
+  {
+    cell->board[cell->row][cell->column]->is_open = 1;
+    if (cell->board[cell->row][cell->column]->value == 0) 
+    {
+      if (cell->row - 1 < MAX_HEIGHT && cell->row - 1 >= 0 && cell->column - 1 < MAX_WIDTH && cell->column - 1 >= 0)
+        openBoard(cell->board, cell->column - 1, cell->row - 1);
+      if (cell->row < MAX_HEIGHT && cell->row >= 0 && cell->column - 1 < MAX_WIDTH && cell->column - 1 >= 0)
+        openBoard(cell->board, cell->column - 1, cell->row);
+      if (cell->row + 1 < MAX_HEIGHT && cell->row + 1 >= 0 && cell->column - 1 < MAX_WIDTH && cell->column - 1 >= 0)
+        openBoard(cell->board, cell->column - 1, cell->row + 1);
+      if (cell->row - 1 < MAX_HEIGHT && cell->row - 1 >= 0 && cell->column < MAX_WIDTH && cell->column >= 0)
+        openBoard(cell->board, cell->column, cell->row - 1);
+      if (cell->row + 1 < MAX_HEIGHT && cell->row + 1 >= 0 && cell->column < MAX_WIDTH && cell->column >= 0)
+        openBoard(cell->board, cell->column, cell->row + 1);
+      if (cell->row - 1 < MAX_HEIGHT && cell->row - 1 >= 0 && cell->column + 1 < MAX_WIDTH && cell->column + 1 >= 0)
+        openBoard(cell->board, cell->column + 1, cell->row - 1);
+      if (cell->row < MAX_HEIGHT && cell->row >= 0 && cell->column + 1 < MAX_WIDTH && cell->column + 1 >= 0)
+        openBoard(cell->board, cell->column + 1, cell->row);
+      if (cell->row + 1 < MAX_HEIGHT && cell->row + 1 >= 0 && cell->column + 1 < MAX_WIDTH && cell->column + 1 >= 0)
+        openBoard(cell->board, cell->column + 1, cell->row + 1);
+    }
+  }
 
 };
 
 void openBoard(Cell ***board, int column, int row) {
-  pthread_t thr1, thr2, thr3, thr4, thr5, thr6, thr7, thr8;
+  pthread_t thr1;
+  CurrentCell current_cell = {board, row, column};
 
+  pthread_create(&thr1, NULL, p_thread_open, (void*)&current_cell);
+  pthread_join(thr1, NULL);
 };
 
 void* f_thread(void *v) {
