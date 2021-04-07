@@ -47,7 +47,7 @@ int main()
   char cell[3];
   int row, column;
   Cell ***board = createBoard();
-  printf(" Welcome to Minesweeer!\n");
+  printf(" \e[1;35mWelcome to Minesweeer!\e[0m\n");
   initBoard(board);
   do
   {
@@ -68,7 +68,7 @@ int main()
       {
         if (board[row][column]->value == 10) {
           board[row][column]->is_open = 1;
-          printf("\n GAME OVER :(\n\n");
+          printf("\n \e[1;31mGAME OVER :(\e[0m\n\n");
           break;
         } 
         else if (board[row][column]->value == 0) 
@@ -82,7 +82,7 @@ int main()
       }
       else
       {
-        printf("Invalid command\n");
+        printf("\e[1;31mInvalid command\e[0m\n");
       }
     }
     else if (command == 'f')
@@ -100,7 +100,7 @@ int main()
       }
       else
       {
-        printf("Invalid command\n");
+        printf("\e[1;31mInvalid command\e[0m\n");
       }
     }
     else if (command == 'q')
@@ -109,7 +109,7 @@ int main()
     }
     else
     {
-      printf("Invalid command\n");
+      printf("\e[1;31mInvalid command\e[0m\n");
     }
 
   } while (isBoardCompleted(board));
@@ -209,18 +209,22 @@ void printBoard(Cell ***cell)
     if (i == MAX_WIDTH)
       printf("   ");
     else
-      printf(" %d ", i + 1);
+      printf(" \e[1;35m%d \e[0m", i + 1);
     for (int j = 0; j < MAX_HEIGHT; j++)
     {
       if (i == MAX_WIDTH)
-        printf(" %c ", j + 65);
+        printf(" \e[1;35m%c \e[0m", j + 65);
       else if(cell[i][j]->is_open) {
         if (cell[i][j]->is_flagged)
-          printf("[F]");
+          printf("\e[1;33m[F]\e[0m");
         else if (cell[i][j]->value == 10)
-          printf("[B]");
+          printf("\e[1;31m[B]\e[0m");
+        else if (cell[i][j]->value == 0)
+          printf("\e[1;36m[%d]\e[0m", cell[i][j]->value);
+        else if (cell[i][j]->value == 1)
+          printf("\e[1;32m[%d]\e[0m", cell[i][j]->value);
         else
-          printf("[%d]", cell[i][j]->value);
+          printf("\e[1;33m[%d]\e[0m", cell[i][j]->value);
       } else if(cell[i][j]->is_open == 0)
         printf("[ ]");
     }
@@ -300,7 +304,7 @@ int isBoardCompleted(Cell ***cell)
 
   flags_and_spaces = first_quadrant.return_thread + second_quadrant.return_thread + third_quadrant.return_thread + fourth_quadrant.return_thread;
   if (flags_and_spaces == 10) {
-    printf("\n YOU WIN :)\n\n");
+    printf("\n \e[1;35mYOU WIN :)\e[0m\n\n");
     return 0;
   }
   return 1;
