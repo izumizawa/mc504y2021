@@ -3,7 +3,7 @@
 ## 💽 Projeto 1: Aplicação Multithread 
 
 ### 🎲 Tema 
-O tema do nosso projeto 1 é  [Campo Minado](https://pt.wikipedia.org/wiki/Campo_minado), o jogo de computador que tem como objectivo revelar um campo de minas sem que alguma seja detonada.
+O tema do nosso projeto 1 é  [Campo Minado](https://pt.wikipedia.org/wiki/Campo_minado), o jogo de computador que tem como objetivo revelar um campo de minas sem que alguma seja detonada.
 
 ### 📌 Requisitos 
 - [x] Uso da biblioteca pthread 
