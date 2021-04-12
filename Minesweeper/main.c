@@ -1,21 +1,25 @@
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 /* Minesweeper board meanings
   0: Blank space = no bombs around
   1 ~ 8: Number of bombs around the space
-  9: Flag where player thinks there is a bomb
   10: Bomb (B)
-  11: Closed space (' ')
 */
 
 #define MAX_HEIGHT 9
 #define MAX_WIDTH 9
+#define BOMBS 10
 
-int AnswersBoard[MAX_WIDTH][MAX_HEIGHT]; // Board with answers
-int UserBoard[MAX_WIDTH][MAX_HEIGHT];    // Board player can see
+typedef struct Cell {
+  int value;
+  int is_open;
+  int is_flagged;
+} Cell;
 
 typedef struct Quadrant {
+  Cell*** board;
   int start_row;
   int start_column;
   int end_row;
@@ -23,10 +27,18 @@ typedef struct Quadrant {
   int return_thread;
 } Quadrant;
 
+typedef struct CurrentCell {
+  Cell*** board;
+  int row;
+  int column;
+} CurrentCell;
+
+Cell*** createBoard();
+void initBoard();
 void setAnswersBoard();
 void setUserBoard();
 void printBoard();
-void openBoard(int column, int row);
+void openBoard(Cell ***board, int column, int row);
 int isBoardCompleted();
 
 int main()
@@ -34,12 +46,12 @@ int main()
   char command;
   char cell[3];
   int row, column;
-  printf(" Welcome to Minesweeer!\n");
-  setAnswersBoard();
-  setUserBoard();
+  Cell ***board = createBoard();
+  printf(" \e[1;35mWelcome to Minesweeer!\e[0m\n");
+  initBoard(board);
   do
   {
-    printBoard();
+    printBoard(board);
     printf(" Use the command 'o' to open a cell, 'f' to flag a cell or 'q' to quit\n");
     printf("Command--> ");
     scanf(" %c", &command);
@@ -54,20 +66,23 @@ int main()
       column = (int)cell[0] - 65;
       if (row < MAX_HEIGHT && row >= 0 && column < MAX_WIDTH && column >= 0)
       {
-        UserBoard[row][column] = AnswersBoard[row][column];
-        if (UserBoard[row][column] == 10) {
-          printf("\n GAME OVER :(\n\n");
+        if (board[row][column]->value == 10) {
+          board[row][column]->is_open = 1;
+          printf("\n \e[1;31mGAME OVER :(\e[0m\n\n");
           break;
-          printf("\n GAME OVER :(\n\n");
         } 
-        else if (UserBoard[row][column] == 0) 
+        else if (board[row][column]->value == 0) 
         {
-          openBoard(column, row);
+          openBoard(board, column, row);
+        }
+        else
+        {
+          board[row][column]->is_open = 1;
         }
       }
       else
       {
-        printf("Invalid command\n");
+        printf("\e[1;31mInvalid command\e[0m\n");
       }
     }
     else if (command == 'f')
@@ -80,11 +95,12 @@ int main()
       column = (int)cell[0] - 65;
       if (row < MAX_HEIGHT && row >= 0 && column < MAX_WIDTH && column >= 0)
       {
-        UserBoard[row][column] = 9;
+        board[row][column]->is_open = 1;
+        board[row][column]->is_flagged = 1;
       }
       else
       {
-        printf("Invalid command\n");
+        printf("\e[1;31mInvalid command\e[0m\n");
       }
     }
     else if (command == 'q')
@@ -93,160 +109,193 @@ int main()
     }
     else
     {
-      printf("Invalid command\n");
+      printf("\e[1;31mInvalid command\e[0m\n");
     }
 
-  } while (isBoardCompleted());
-
-  printBoard();
+  } while (isBoardCompleted(board));
+  printBoard(board);
+  printf("\n");
   return 0;
 }
 
-void setBombs()
+Cell*** createBoard()
 {
-  // Set bombs
-  AnswersBoard[0][7] = 10;
-  AnswersBoard[1][0] = 10;
-  AnswersBoard[1][6] = 10;
-  AnswersBoard[2][8] = 10;
-  AnswersBoard[3][7] = 10;
-  AnswersBoard[4][1] = 10;
-  AnswersBoard[4][4] = 10;
-  AnswersBoard[5][3] = 10;
-  AnswersBoard[7][8] = 10;
-  AnswersBoard[8][2] = 10;
-};
-
-// set a closed board
-void setBlankSpaces()
-{
-  for (int i = 0; i < MAX_WIDTH; i++)
-  {
-    for (int j = 0; j < MAX_HEIGHT; j++)
+  Cell ***cell = malloc(MAX_HEIGHT * sizeof(Cell**));
+  if (cell != NULL) {
+    for(int i = 0; i < MAX_HEIGHT; i++) 
     {
-      AnswersBoard[i][j] = 0;
+      cell[i] = malloc(MAX_WIDTH * sizeof(Cell*));
+      if(cell[i] != NULL)
+      for(int j = 0; j < MAX_WIDTH; j++) 
+      {
+        cell[i][j] = malloc(sizeof(Cell));
+      }
     }
   }
-}
-
-// Create fixed board
-void setAnswersBoard()
-{
-  setBlankSpaces();
-  setBombs();
-  AnswersBoard[0][0] = 1;
-  AnswersBoard[0][1] = 1;
-  AnswersBoard[0][5] = 1;
-  AnswersBoard[0][6] = 2;
-  AnswersBoard[0][8] = 1;
-  AnswersBoard[1][1] = 1;
-  AnswersBoard[1][5] = 1;
-  AnswersBoard[1][7] = 3;
-  AnswersBoard[1][8] = 2;
-  AnswersBoard[2][0] = 1;
-  AnswersBoard[2][1] = 1;
-  AnswersBoard[2][5] = 1;
-  AnswersBoard[2][6] = 2;
-  AnswersBoard[2][7] = 3;
-  for (int i = 0; i < 7; i++)
-    AnswersBoard[3][i] = 1;
-  AnswersBoard[3][8] = 2;
-  AnswersBoard[4][0] = 1;
-  AnswersBoard[4][2] = 2;
-  AnswersBoard[4][3] = 2;
-  AnswersBoard[4][5] = 1;
-  AnswersBoard[4][6] = 1;
-  AnswersBoard[4][7] = 1;
-  AnswersBoard[4][8] = 1;
-  AnswersBoard[5][0] = 1;
-  AnswersBoard[5][1] = 1;
-  AnswersBoard[5][2] = 2;
-  AnswersBoard[5][4] = 2;
-  AnswersBoard[5][5] = 1;
-  AnswersBoard[6][2] = 1;
-  AnswersBoard[6][3] = 1;
-  AnswersBoard[6][4] = 1;
-  AnswersBoard[6][7] = 1;
-  AnswersBoard[6][8] = 1;
-  AnswersBoard[7][1] = 1;
-  AnswersBoard[7][2] = 1;
-  AnswersBoard[7][3] = 1;
-  AnswersBoard[7][7] = 1;
-  AnswersBoard[8][1] = 1;
-  AnswersBoard[8][3] = 1;
-  AnswersBoard[8][7] = 1;
-  AnswersBoard[8][8] = 1;
+  return cell;
 };
 
-void setUserBoard()
+void setBombs(Cell ***cell)
+{
+  int bombs = BOMBS;
+  while (bombs != 0) 
+  {
+    int row = rand()%9;
+    int column =  rand()%9;
+    if (cell[row][column]->value != 10) {
+      cell[row][column]->value = 10;
+      bombs--;
+    }
+  }
+};
+
+// Create fixed board
+void setValuesBoard(Cell ***cell)
 {
   for (int i = 0; i < MAX_HEIGHT; i++)
   {
     for (int j = 0; j < MAX_WIDTH; j++)
     {
-      UserBoard[i][j] = 11;
+      if(cell[i][j]->value == 10) 
+      {
+        if (i - 1 < MAX_HEIGHT && i - 1 >= 0 && j - 1 < MAX_WIDTH && j - 1 >= 0)
+          if (cell[i-1][j-1]->value != 10)
+            cell[i-1][j-1]->value++;
+        if (i < MAX_HEIGHT && i >= 0 && j - 1 < MAX_WIDTH && j - 1 >= 0)
+          if (cell[i][j-1]->value != 10)
+            cell[i][j-1]->value++;
+        if (i + 1 < MAX_HEIGHT && i + 1 >= 0 && j - 1 < MAX_WIDTH && j - 1 >= 0)
+          if (cell[i+1][j-1]->value != 10)
+            cell[i+1][j-1]->value++;
+        if (i - 1 < MAX_HEIGHT && i - 1 >= 0 && j < MAX_WIDTH && j >= 0)
+          if (cell[i-1][j]->value != 10)
+            cell[i-1][j]->value++;
+        if (i + 1 < MAX_HEIGHT && i + 1 >= 0 && j < MAX_WIDTH && j >= 0)
+          if (cell[i+1][j]->value != 10)
+            cell[i+1][j]->value++;
+        if (i - 1 < MAX_HEIGHT && i - 1 >= 0 && j + 1 < MAX_WIDTH && j + 1 >= 0)
+          if (cell[i-1][j+1]->value != 10)
+            cell[i-1][j+1]->value++;
+        if (i < MAX_HEIGHT && i >= 0 && j + 1 < MAX_WIDTH && j + 1 >= 0)
+          if (cell[i][j+1]->value != 10)
+            cell[i][j+1]->value++;
+        if (i + 1 < MAX_HEIGHT && i + 1 >= 0 && j + 1 < MAX_WIDTH && j + 1 >= 0)
+          if (cell[i+1][j+1]->value != 10)
+            cell[i+1][j+1]->value++;
+      }
     }
   }
-}
+};
 
-void printBoard()
+void initBoard(Cell ***cell) 
+{
+  for (int i = 0; i < MAX_HEIGHT; i++) 
+  {
+    for (int j = 0; j < MAX_WIDTH; j++) 
+    {
+      cell[i][j]->value = 0;
+      cell[i][j]->is_open = 0;
+      cell[i][j]->is_flagged = 0;
+    }  
+  }
+  setBombs(cell);
+  setValuesBoard(cell);
+};
+
+void printBoard(Cell ***cell)
 {
   for (int i = 0; i <= MAX_WIDTH; i++)
   {
     if (i == MAX_WIDTH)
       printf("   ");
     else
-      printf(" %d ", i + 1);
+      printf(" \e[1;35m%d \e[0m", i + 1);
     for (int j = 0; j < MAX_HEIGHT; j++)
     {
       if (i == MAX_WIDTH)
-        printf(" %c ", j + 65);
-      else if (UserBoard[i][j] == 11)
+        printf(" \e[1;35m%c \e[0m", j + 65);
+      else if(cell[i][j]->is_open) {
+        if (cell[i][j]->is_flagged)
+          printf("\e[1;33m[F]\e[0m");
+        else if (cell[i][j]->value == 10)
+          printf("\e[1;31m[B]\e[0m");
+        else if (cell[i][j]->value == 0)
+          printf("\e[1;36m[%d]\e[0m", cell[i][j]->value);
+        else if (cell[i][j]->value == 1)
+          printf("\e[1;32m[%d]\e[0m", cell[i][j]->value);
+        else
+          printf("\e[1;33m[%d]\e[0m", cell[i][j]->value);
+      } else if(cell[i][j]->is_open == 0)
         printf("[ ]");
-      else if (UserBoard[i][j] == 10)
-        printf("[B]");
-      else if (UserBoard[i][j] == 9)
-        printf("[F]");
-      else
-        printf("[%d]", UserBoard[i][j]);
     }
     printf("\n");
   }
 };
 
-void openBoard(int column, int row) {
-  pthread_t thr1;
-  
+void* p_thread_open(void *v) {
+  CurrentCell *cell = (CurrentCell*)v;
+  if(cell->board[cell->row][cell->column]->is_open == 0) 
+  {
+    cell->board[cell->row][cell->column]->is_open = 1;
+    if (cell->board[cell->row][cell->column]->value == 0) 
+    {
+      if (cell->row - 1 < MAX_HEIGHT && cell->row - 1 >= 0 && cell->column - 1 < MAX_WIDTH && cell->column - 1 >= 0)
+        openBoard(cell->board, cell->column - 1, cell->row - 1);
+      if (cell->row < MAX_HEIGHT && cell->row >= 0 && cell->column - 1 < MAX_WIDTH && cell->column - 1 >= 0)
+        openBoard(cell->board, cell->column - 1, cell->row);
+      if (cell->row + 1 < MAX_HEIGHT && cell->row + 1 >= 0 && cell->column - 1 < MAX_WIDTH && cell->column - 1 >= 0)
+        openBoard(cell->board, cell->column - 1, cell->row + 1);
+      if (cell->row - 1 < MAX_HEIGHT && cell->row - 1 >= 0 && cell->column < MAX_WIDTH && cell->column >= 0)
+        openBoard(cell->board, cell->column, cell->row - 1);
+      if (cell->row + 1 < MAX_HEIGHT && cell->row + 1 >= 0 && cell->column < MAX_WIDTH && cell->column >= 0)
+        openBoard(cell->board, cell->column, cell->row + 1);
+      if (cell->row - 1 < MAX_HEIGHT && cell->row - 1 >= 0 && cell->column + 1 < MAX_WIDTH && cell->column + 1 >= 0)
+        openBoard(cell->board, cell->column + 1, cell->row - 1);
+      if (cell->row < MAX_HEIGHT && cell->row >= 0 && cell->column + 1 < MAX_WIDTH && cell->column + 1 >= 0)
+        openBoard(cell->board, cell->column + 1, cell->row);
+      if (cell->row + 1 < MAX_HEIGHT && cell->row + 1 >= 0 && cell->column + 1 < MAX_WIDTH && cell->column + 1 >= 0)
+        openBoard(cell->board, cell->column + 1, cell->row + 1);
+    }
+  }
 
 };
 
-void* f_thread(void *v) {
+void openBoard(Cell ***board, int column, int row) {
+  pthread_t thr1;
+  CurrentCell current_cell = {board, row, column};
+
+  pthread_create(&thr1, NULL, p_thread_open, (void*)&current_cell);
+  pthread_join(thr1, NULL);
+};
+
+void* p_thread_endgame(void *v) {
   Quadrant *id = (Quadrant*)v;
   for (int i = id->start_row; i <= id->end_row; i++) {
     for (int j = id->start_column; j <= id->end_column; j++)
     {
-      if(UserBoard[i][j] == 11 || UserBoard[i][j] == 9) 
-          id->return_thread++; 
+      if(id->board[i][j]->is_open == 0 || id->board[i][j]->is_flagged) {
+        id->return_thread++; 
+      } 
     }
   }
   return NULL; 
 } 
 
-int isBoardCompleted()
+int isBoardCompleted(Cell ***cell)
 {
   int flags_and_spaces;
   int middle_width = (int)MAX_WIDTH/2;
   int middle_height = (int)MAX_HEIGHT/2;
   pthread_t thr1, thr2, thr3, thr4;
-  Quadrant first_quadrant = {0, 0, middle_height, middle_width, 0};
-  Quadrant second_quadrant = {0, middle_width + 1, middle_height, MAX_WIDTH - 1, 0};
-  Quadrant third_quadrant = {middle_height + 1, 0, MAX_HEIGHT - 1, middle_width, 0};
-  Quadrant fourth_quadrant = {middle_height + 1, middle_width + 1, MAX_HEIGHT - 1, MAX_WIDTH - 1, 0};
+  Quadrant first_quadrant = {cell, 0, 0, middle_height, middle_width, 0};
+  Quadrant second_quadrant = {cell, 0, middle_width + 1, middle_height, MAX_WIDTH - 1, 0};
+  Quadrant third_quadrant = {cell, middle_height + 1, 0, MAX_HEIGHT - 1, middle_width, 0};
+  Quadrant fourth_quadrant = {cell, middle_height + 1, middle_width + 1, MAX_HEIGHT - 1, MAX_WIDTH - 1, 0};
 
-  pthread_create(&thr1, NULL, f_thread, (void*)&first_quadrant);
-  pthread_create(&thr2, NULL, f_thread, (void*)&second_quadrant);
-  pthread_create(&thr3, NULL, f_thread, (void*)&third_quadrant);
-  pthread_create(&thr4, NULL, f_thread, (void*)&fourth_quadrant);
+  pthread_create(&thr1, NULL, p_thread_endgame, (void*)&first_quadrant);
+  pthread_create(&thr2, NULL, p_thread_endgame, (void*)&second_quadrant);
+  pthread_create(&thr3, NULL, p_thread_endgame, (void*)&third_quadrant);
+  pthread_create(&thr4, NULL, p_thread_endgame, (void*)&fourth_quadrant);
 
   pthread_join(thr1, NULL);
   pthread_join(thr2, NULL);
@@ -255,7 +304,7 @@ int isBoardCompleted()
 
   flags_and_spaces = first_quadrant.return_thread + second_quadrant.return_thread + third_quadrant.return_thread + fourth_quadrant.return_thread;
   if (flags_and_spaces == 10) {
-    printf("\n YOU WIN :)\n\n");
+    printf("\n \e[1;35mYOU WIN :)\e[0m\n\n");
     return 0;
   }
   return 1;

@@ -3,27 +3,26 @@
 ## 💽 Projeto 1: Aplicação Multithread 
 
 ### 🎲 Tema 
-O tema do nosso projeto 1 é  [Campo Minado](https://pt.wikipedia.org/wiki/Campo_minado), o jogo de computador que tem como objectivo revelar um campo de minas sem que alguma seja detonada.
+O tema do nosso projeto 1 é  [Campo Minado](https://pt.wikipedia.org/wiki/Campo_minado), o jogo de computador que tem como objetivo revelar um campo de minas sem que alguma seja detonada.
 
 ### 📌 Requisitos 
-- [ ] Uso da biblioteca pthread 
-- [ ] Matriz de dados a ser lida e processada
-- [ ] Threads colaboram neste processamento
-- [ ] Estratégias para divisão de trabalho
-- [ ] Problema que dispense sincronização durante o processamento
+- [x] Uso da biblioteca pthread 
+- [x] Matriz de dados a ser lida e processada
+- [x] Threads colaboram neste processamento
+- [x] Estratégias para divisão de trabalho
+- [x] Problema que dispense sincronização durante o processamento
 
 #### 📋 Matriz 
 Matriz com 9 linhas e 9 colunas. 
 
 #### 🃏 Campo
 
-Cada espaço da matriz pode ter:
+Cada espaço da matriz possui três propriedades:
 
-* Espaço fechado
-* Um espaço vazio
-* Um número indicando quantas bombas há em sua volta
-* Um marcador que sinaliza onde tem uma bomba
-* Uma bomba
+* ``value``: valor, que pode ser o valor de bombas ao seu redor (0 a 8) ou 10 que é o valor das bombas
+* ``is_open``: dita se o campo foi aberto, é iniciado fechado
+* ``is_flagged``: dita se há uma bandeira, sinalização feita pelo usuário para mostrar onde acredita ter uma mina
+
 
 ## 💻 Autores 
 
