@@ -268,7 +268,7 @@ void openBoard(Cell ***board, int column, int row) {
   pthread_join(thr1, NULL);
 };
 
-void* f_thread(void *v) {
+void* p_thread_endgame(void *v) {
   Quadrant *id = (Quadrant*)v;
   for (int i = id->start_row; i <= id->end_row; i++) {
     for (int j = id->start_column; j <= id->end_column; j++)
@@ -292,10 +292,10 @@ int isBoardCompleted(Cell ***cell)
   Quadrant third_quadrant = {cell, middle_height + 1, 0, MAX_HEIGHT - 1, middle_width, 0};
   Quadrant fourth_quadrant = {cell, middle_height + 1, middle_width + 1, MAX_HEIGHT - 1, MAX_WIDTH - 1, 0};
 
-  pthread_create(&thr1, NULL, f_thread, (void*)&first_quadrant);
-  pthread_create(&thr2, NULL, f_thread, (void*)&second_quadrant);
-  pthread_create(&thr3, NULL, f_thread, (void*)&third_quadrant);
-  pthread_create(&thr4, NULL, f_thread, (void*)&fourth_quadrant);
+  pthread_create(&thr1, NULL, p_thread_endgame, (void*)&first_quadrant);
+  pthread_create(&thr2, NULL, p_thread_endgame, (void*)&second_quadrant);
+  pthread_create(&thr3, NULL, p_thread_endgame, (void*)&third_quadrant);
+  pthread_create(&thr4, NULL, p_thread_endgame, (void*)&fourth_quadrant);
 
   pthread_join(thr1, NULL);
   pthread_join(thr2, NULL);
