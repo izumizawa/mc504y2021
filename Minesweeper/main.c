@@ -216,7 +216,7 @@ void printBoard(Cell ***cell)
         printf(" \e[1;35m%c \e[0m", j + 65);
       else if(cell[i][j]->is_open) {
         if (cell[i][j]->is_flagged)
-          printf("\e[1;33m[F]\e[0m");
+          printf("\e[1;31m[F]\e[0m");
         else if (cell[i][j]->value == 10)
           printf("\e[1;31m[B]\e[0m");
         else if (cell[i][j]->value == 0)
