@@ -8,18 +8,16 @@
 #define MAX_STUDENTS 20
 #define N_STUDENTS 25
 
-// officer = 0 é 'not here', = 1 é 'waiting' e = 2 é 'in the room'
-
-volatile int students = 0; // quantos tem dentro
-volatile int officer_state = 0; // 0, 1 ou 2
-volatile int dance_position = 0; // passo de danca
+volatile int students = 0; 
+volatile int officer_state = 0; // officer_state = 0 is 'not here', = 1 is 'waiting' and = 2 is 'in the room'
+volatile int dance_position = 0;
 
 pthread_mutex_t sem_mutex; 
 pthread_mutex_t sem_print;
 
-sem_t sem_turn; // não pode entrar
-sem_t sem_clear; // vaza
-sem_t sem_lie_in; // pode entrar
+sem_t sem_turn; // não pode entrar na festa
+sem_t sem_clear; // todos precisam ir embora
+sem_t sem_lie_in; // podem entrar
 
 void show_student(int n_students, int dance_position) {
     char dancer[10][3][5];
@@ -125,7 +123,6 @@ void show_party() {
     */
     pthread_mutex_lock(&sem_print);
     int n_students = students;
-    // int dance_position = 0;
 
     system("clear");
     if (officer_state == 2)
@@ -150,91 +147,67 @@ void show_party() {
 
 void *p_thread_officer(void *v) {
     pthread_mutex_lock(&sem_mutex);
-    // Verifica se tem estudantes
+
     if (students > 0 && students < MAX_STUDENTS) {
-    // Se tiver mais de um e menos de MAX_STUDENTS vai ficar esperando
         officer_state = 1;
         show_party();
         pthread_mutex_unlock(&sem_mutex);
-        // printf("Policial esperando...\n");
         sem_wait(&sem_lie_in);
     }
-
     else if (students >= MAX_STUDENTS) {
-    // Se não tiver olha e vai embora
         officer_state = 2;
-        // breakup();
         show_party();
-        // printf("Policial entrou no rolê e está esperando todos saírem.\n");
         sem_wait(&sem_turn);
         pthread_mutex_unlock(&sem_mutex);
         sem_wait(&sem_clear);
-        // show_party();
-        // printf("Agora podem entrar.\n");
         sem_post(&sem_turn);
     }
-
     else {
-    // Se houver mais de MAX_STUDENTS entra e manda todo mundo embora
-        // search ();
         officer_state = 2;
         show_party();
-        // printf("Policial fiscalizando...\n");
         sleep(1);
     }
 
     officer_state = 0;
     show_party();
-    // printf("Policial foi embora.\n");
     pthread_mutex_unlock(&sem_mutex);
 }
 
 void *p_thread_students(void *v) {
     pthread_mutex_lock(&sem_mutex);
 
-    // Verifica se policial esta presente
     if (officer_state == 2){
         show_party();
         pthread_mutex_unlock(&sem_mutex);
-        //  Testar começar festa e depois do guarda chegar, colocar mais pessoas e ver as pessoas bloqueadas
-        // printf("Estudantes não podem entrar. Polícia na área!\n");
         sem_wait(&sem_turn); 
         sem_post(&sem_turn);
         pthread_mutex_lock(&sem_mutex);
     }
 
-    // Se estiver vai embora
     students += 1;
     show_party();
-    // printf("1 estudante entrou. Tem %d no rolê.\n", students);
-
 
     if (students == MAX_STUDENTS && officer_state == 1)
     {
         show_party();
-        // printf("A polícia está chegando!\n");
         sem_post(&sem_lie_in);
     }
-    // and pass mutex to the officer
     else {
         pthread_mutex_unlock(&sem_mutex);
     }
 
-    // Se não entra
-    // party(); 
     sleep(1);
 
     pthread_mutex_lock(&sem_mutex);
     students -= 1;
     show_party();
-    // printf("1 estudante foi embora. Tem %d no rolê.\n", students);
 
     if (students == 0 && officer_state == 1)
     {
-        sem_post(&sem_lie_in); // and pass mutex to the officer
+        sem_post(&sem_lie_in);
     }
     else if (students == 0 && officer_state == 2){
-        sem_post(&sem_clear); // and pass mutex to the officer
+        sem_post(&sem_clear);
     }
     else {
         pthread_mutex_unlock(&sem_mutex);
@@ -245,7 +218,6 @@ void *p_thread_students(void *v) {
 int main() {
     pthread_t thr_students[N_STUDENTS], thr_officer;
 
-    // sem_init(&sem_mutex, 0, 1);
     sem_init(&sem_turn, 0, 1);
     sem_init(&sem_clear, 0, 0);
     sem_init(&sem_lie_in, 0, 0);
