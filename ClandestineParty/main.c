@@ -48,9 +48,6 @@ void show_student(int n_students, int dance_position) {
     strcpy(dancer[8][0], " o _ ");
     strcpy(dancer[8][1], " /\\  ");
     strcpy(dancer[8][2], " / | ");
-    strcpy(dancer[9][0], "\\ o /");
-    strcpy(dancer[9][1], "  |  ");
-    strcpy(dancer[9][2], " / \\ ");
 
     for (int i = 0; i < 3; i++)
     {
@@ -140,7 +137,7 @@ void show_party() {
     }
 
     dance_position += 1;
-    dance_position = dance_position%10;
+    dance_position = dance_position%9;
     sleep(1);
     pthread_mutex_unlock(&sem_print);
 }
@@ -154,7 +151,7 @@ void *p_thread_officer(void *v) {
         pthread_mutex_unlock(&sem_mutex);
         sem_wait(&sem_lie_in);
     }
-    else if (students >= MAX_STUDENTS) {
+    if (students >= MAX_STUDENTS) {
         officer_state = 2;
         show_party();
         sem_wait(&sem_turn);
@@ -189,7 +186,6 @@ void *p_thread_students(void *v) {
 
     if (students == MAX_STUDENTS && officer_state == 1)
     {
-        show_party();
         sem_post(&sem_lie_in);
     }
     else {
@@ -225,12 +221,16 @@ int main() {
     // pthread_mutex_init(&sem_mutex, NULL);
     // pthread_create(&thr_officer, NULL, p_thread_officer, NULL);
 
+    pthread_mutex_init(&sem_mutex, NULL);
     for (int i = 0; i < N_STUDENTS; i++) {
         pthread_create(&thr_students[i], NULL, p_thread_students, NULL);
+        if (i == 15) {
+            pthread_create(&thr_officer, NULL, p_thread_officer, NULL);
+        }
     }
 
-    pthread_mutex_init(&sem_mutex, NULL);
-    pthread_create(&thr_officer, NULL, p_thread_officer, NULL);
+    // pthread_mutex_init(&sem_mutex, NULL);
+    // pthread_create(&thr_officer, NULL, p_thread_officer, NULL);
 
     for (int i = 0; i < N_STUDENTS; i++) 
         pthread_join(thr_students[i], NULL);
